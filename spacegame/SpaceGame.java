@@ -31,6 +31,16 @@ public class SpaceGame extends JFrame implements KeyListener {
     private Player player;
     private BufferedImage shipImage;
     private Projectile projectile;
+    private static class AfterImage {
+        int x, y;
+        float alpha;
+        AfterImage(int x, int y) {
+            this.x = x;
+            this.y = y;
+            this.alpha = 1.0f;
+        }
+    }
+    private final List<AfterImage> afterImages = new ArrayList<>();
     private List<Obstacle> obstacles = new ArrayList<>();
     private List<Star> stars = new ArrayList<>();
     private List<ParticleExplosion> explosions = new ArrayList<>();
@@ -39,6 +49,7 @@ public class SpaceGame extends JFrame implements KeyListener {
     private boolean leftPressed = false;
     private boolean rightPressed = false;
     private boolean isFiring = false;
+    private int dashTrailFramesLeft = 0;
     private int score = 0;
 
     public SpaceGame() {
@@ -75,12 +86,17 @@ public class SpaceGame extends JFrame implements KeyListener {
         gamePanel.requestFocusInWindow();
 
         generateStaticStars(200);
+        if (dashTrailFramesLeft > 0) {
+            dashTrailFramesLeft--;
+            afterImages.add(new AfterImage(player.getX(), player.getY()));
+        }
         updateScoreLabel();
 
         // Game loop timer (updates every 20ms)
         timer = new javax.swing.Timer(20, e -> {
             if (gameState == GameState.PLAYING) {
                 update();
+
             }
             gamePanel.repaint();
         });
@@ -118,6 +134,10 @@ public class SpaceGame extends JFrame implements KeyListener {
         }
 
         player.updateStatus();
+        if (dashTrailFramesLeft > 0) {
+            afterImages.add(new AfterImage(player.getX(), player.getY()));
+            dashTrailFramesLeft--;
+        }
         if (leftPressed) player.moveLeft();
         if (rightPressed) player.moveRight(WIDTH);
 
@@ -189,6 +209,17 @@ public class SpaceGame extends JFrame implements KeyListener {
         }
 
         if (player != null && shipImage != null) {
+            Iterator<AfterImage> it = afterImages.iterator();
+            Graphics2D g2d = (Graphics2D) g;
+            while (it.hasNext()) {
+                AfterImage a = it.next();
+                Composite original = g2d.getComposite();
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a.alpha));
+                g2d.drawImage(shipImage, a.x, a.y, null);
+                g2d.setComposite(original);
+                a.alpha -= 0.1f;
+                if (a.alpha <= 0) it.remove();
+            }
             g.drawImage(shipImage, player.getX(), player.getY(), null);
         }
         if (projectile != null) projectile.draw(g);
@@ -252,8 +283,13 @@ public class SpaceGame extends JFrame implements KeyListener {
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_S:
                 if (player.canDash()) {
-                    if (leftPressed) player.dashLeft();
-                    else if (rightPressed) player.dashRight(WIDTH);
+                    if (leftPressed) {
+                        player.dashLeft();
+                        dashTrailFramesLeft = 6;
+                    } else if (rightPressed) {
+                        player.dashRight(WIDTH);
+                        dashTrailFramesLeft = 6;
+                    }
                 }
                 break;
             case KeyEvent.VK_UP:

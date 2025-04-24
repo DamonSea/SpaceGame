@@ -1,5 +1,10 @@
 package spacegame;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -24,6 +29,7 @@ public class SpaceGame extends JFrame implements KeyListener {
 
     // Game entities
     private Player player;
+    private BufferedImage shipImage;
     private Projectile projectile;
     private List<Obstacle> obstacles = new ArrayList<>();
     private List<Star> stars = new ArrayList<>();
@@ -36,6 +42,11 @@ public class SpaceGame extends JFrame implements KeyListener {
     private int score = 0;
 
     public SpaceGame() {
+        try {
+            shipImage = ImageIO.read(new File("Asteroid Destroyer 2.png"));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
         setTitle("Space Game");
         setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -177,7 +188,9 @@ public class SpaceGame extends JFrame implements KeyListener {
             return;
         }
 
-        if (player != null) player.draw(g);
+        if (player != null && shipImage != null) {
+            g.drawImage(shipImage, player.getX(), player.getY(), null);
+        }
         if (projectile != null) projectile.draw(g);
         for (Obstacle obs : obstacles) obs.draw(g);
         for (ParticleExplosion explosion : explosions) explosion.draw(g);

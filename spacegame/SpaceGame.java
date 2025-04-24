@@ -215,7 +215,9 @@ public class SpaceGame extends JFrame implements KeyListener {
                 AfterImage a = it.next();
                 Composite original = g2d.getComposite();
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a.alpha));
-                g2d.drawImage(shipImage, a.x, a.y, null);
+                float hue = (1.0f - a.alpha) * 0.8f;
+                g2d.setColor(Color.getHSBColor(hue, 1.0f, 1.0f));
+                g2d.fillRect(a.x, a.y, Player.WIDTH, Player.HEIGHT);
                 g2d.setComposite(original);
                 a.alpha -= 0.1f;
                 if (a.alpha <= 0) it.remove();

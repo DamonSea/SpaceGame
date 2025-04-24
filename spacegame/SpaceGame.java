@@ -169,8 +169,11 @@ public class SpaceGame extends JFrame implements KeyListener {
             FontMetrics fm = g.getFontMetrics();
             String title = "SPACE GAME";
             String start = "Press ENTER to Start";
-            g.drawString(title, (WIDTH - fm.stringWidth(title)) / 2, HEIGHT / 2 - 20);
-            g.drawString(start, (WIDTH - fm.stringWidth(start)) / 2, HEIGHT / 2 + 20);
+            String instructions = "WASD / Arrows to Move, W / Up to Shoot";
+            g.drawString(title, (WIDTH - fm.stringWidth(title)) / 2, HEIGHT / 2 - 40);
+            g.drawString(start, (WIDTH - fm.stringWidth(start)) / 2, HEIGHT / 2);
+            g.setFont(new Font("Arial", Font.PLAIN, 16));
+            g.drawString(instructions, (WIDTH - g.getFontMetrics().stringWidth(instructions)) / 2, HEIGHT / 2 + 40);
             return;
         }
 
@@ -184,9 +187,11 @@ public class SpaceGame extends JFrame implements KeyListener {
             g.setFont(new Font("Arial", Font.BOLD, 24));
             FontMetrics fm = g.getFontMetrics();
             String msg = "GAME OVER";
+            String scoreMsg = "Final Score: " + score;
             String restart = "Press R to Restart";
-            g.drawString(msg, (WIDTH - fm.stringWidth(msg)) / 2, HEIGHT / 2 - 20);
-            g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 20);
+            g.drawString(msg, (WIDTH - fm.stringWidth(msg)) / 2, HEIGHT / 2 - 40);
+            g.drawString(scoreMsg, (WIDTH - fm.stringWidth(scoreMsg)) / 2, HEIGHT / 2);
+            g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 40);
         }
     }
 

@@ -13,20 +13,26 @@ public class SpaceGame extends JFrame implements KeyListener {
     public static final int WIDTH = 500;
     public static final int HEIGHT = 500;
 
+    // Game state management
+    private enum GameState { MENU, PLAYING, GAME_OVER }
+    private GameState gameState = GameState.MENU;
+
+    // UI Components
     private JPanel gamePanel;
     private JLabel scoreLabel;
-    private Timer timer;
+    private javax.swing.Timer timer;
 
+    // Game entities
     private Player player;
     private Projectile projectile;
     private List<Obstacle> obstacles = new ArrayList<>();
     private List<Star> stars = new ArrayList<>();
     private List<ParticleExplosion> explosions = new ArrayList<>();
 
+    // Input and scoring state
     private boolean leftPressed = false;
     private boolean rightPressed = false;
     private boolean isFiring = false;
-    private boolean isGameOver = false;
     private int score = 0;
 
     public SpaceGame() {
@@ -35,6 +41,7 @@ public class SpaceGame extends JFrame implements KeyListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
+        // Setup drawing panel
         gamePanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -43,6 +50,7 @@ public class SpaceGame extends JFrame implements KeyListener {
             }
         };
 
+        // Score display
         scoreLabel = new JLabel();
         scoreLabel.setForeground(Color.WHITE);
         scoreLabel.setOpaque(true);
@@ -55,77 +63,56 @@ public class SpaceGame extends JFrame implements KeyListener {
         gamePanel.addKeyListener(this);
         gamePanel.requestFocusInWindow();
 
-        resetGame();
+        generateStaticStars(200);
+        updateScoreLabel();
 
-        timer = new Timer(20, e -> {
-            if (!isGameOver) {
+        // Game loop timer (updates every 20ms)
+        timer = new javax.swing.Timer(20, e -> {
+            if (gameState == GameState.PLAYING) {
                 update();
-                gamePanel.repaint();
             }
+            gamePanel.repaint();
         });
         timer.start();
     }
 
-    private void resetGame() {
-        score = 0;
-        isGameOver = false;
-        leftPressed = false;
-        rightPressed = false;
-        obstacles.clear();
-        explosions.clear();
-        generateStaticStars(200);
-
-        player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
-        projectile = new Projectile();
-
-        updateScoreLabel();
-    }
-
-    private void draw(Graphics g) {
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, WIDTH, HEIGHT);
-
-        for (Star star : stars) {
-            star.twinkle();
-            g.setColor(star.getColor());
-            g.fillOval(star.x, star.y, 2, 2);
-        }
-
-        player.draw(g);
-        projectile.draw(g);
-
-        for (Obstacle obs : obstacles) {
-            obs.draw(g);
-        }
-
-        for (ParticleExplosion explosion : explosions) {
-            explosion.draw(g);
-        }
-
-        if (isGameOver) {
-            g.setColor(Color.WHITE);
-            Font font = new Font("Arial", Font.BOLD, 24);
-            g.setFont(font);
-            FontMetrics fm = g.getFontMetrics(font);
-            String gameOverText = "Game Over!";
-            String restartText = "Press R to Restart";
-            int x1 = (WIDTH - fm.stringWidth(gameOverText)) / 2;
-            int y1 = HEIGHT / 2;
-            int x2 = (WIDTH - fm.stringWidth(restartText)) / 2;
-            int y2 = y1 + 40;
-            g.drawString(gameOverText, x1, y1);
-            g.drawString(restartText, x2, y2);
+    // Generates random static stars for background
+    private void generateStaticStars(int count) {
+        stars.clear();
+        Random r = new Random();
+        for (int i = 0; i < count; i++) {
+            stars.add(new Star(r.nextInt(WIDTH), r.nextInt(HEIGHT)));
         }
     }
 
+    // Updates score and health UI
+    private void updateScoreLabel() {
+        StringBuilder hearts = new StringBuilder();
+        if (player != null) {
+            for (int i = 0; i < player.getHealth(); i++) hearts.append("\u2665");
+        }
+        scoreLabel.setText("Score: " + score + "    Health: " + hearts);
+    }
+
+    // Main game logic: input, collision, scoring
     private void update() {
-        player.updateStatus();
+        if (player == null || projectile == null) {
+            player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
+            projectile = new Projectile();
+            obstacles.clear();
+            explosions.clear();
+            score = 0;
+            updateScoreLabel();
+            return;
+        }
 
+        player.updateStatus();
         if (leftPressed) player.moveLeft();
         if (rightPressed) player.moveRight(WIDTH);
 
         projectile.update();
 
+        // Obstacle updates and collisions
         Iterator<Obstacle> it = obstacles.iterator();
         while (it.hasNext()) {
             Obstacle o = it.next();
@@ -137,9 +124,7 @@ public class SpaceGame extends JFrame implements KeyListener {
             if (player.getBounds().intersects(o.getBounds())) {
                 explosions.add(new ParticleExplosion(player.getX() + Player.WIDTH / 2, player.getY() + Player.HEIGHT / 2));
                 player.takeDamage();
-                if (player.getHealth() <= 0) {
-                    isGameOver = true;
-                }
+                if (player.getHealth() <= 0) gameState = GameState.GAME_OVER;
                 it.remove();
                 continue;
             }
@@ -148,16 +133,17 @@ public class SpaceGame extends JFrame implements KeyListener {
                 projectile.hide();
                 it.remove();
                 score += 10;
-                continue;
             }
         }
 
+        // Update and remove finished explosions
         for (Iterator<ParticleExplosion> peIt = explosions.iterator(); peIt.hasNext(); ) {
             ParticleExplosion p = peIt.next();
             p.update();
             if (!p.isActive()) peIt.remove();
         }
 
+        // Random enemy spawn
         if (Math.random() < 0.02) {
             int x = new Random().nextInt(WIDTH - Obstacle.WIDTH);
             obstacles.add(new Obstacle(x));
@@ -166,28 +152,75 @@ public class SpaceGame extends JFrame implements KeyListener {
         updateScoreLabel();
     }
 
-    private void updateScoreLabel() {
-        StringBuilder hearts = new StringBuilder();
-        for (int i = 0; i < player.getHealth(); i++) hearts.append("\u2665");
-        scoreLabel.setText("Score: " + score + "    Health: " + hearts);
-    }
+    // Draws all game states and UI
+    private void draw(Graphics g) {
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, WIDTH, HEIGHT);
 
-    private void generateStaticStars(int count) {
-        stars.clear();
-        Random r = new Random();
-        for (int i = 0; i < count; i++) {
-            stars.add(new Star(r.nextInt(WIDTH), r.nextInt(HEIGHT)));
+        for (Star star : stars) {
+            star.twinkle();
+            g.setColor(star.getColor());
+            g.fillOval(star.x, star.y, 2, 2);
+        }
+
+        if (gameState == GameState.MENU) {
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 24));
+            FontMetrics fm = g.getFontMetrics();
+            String title = "SPACE GAME";
+            String start = "Press ENTER to Start";
+            g.drawString(title, (WIDTH - fm.stringWidth(title)) / 2, HEIGHT / 2 - 20);
+            g.drawString(start, (WIDTH - fm.stringWidth(start)) / 2, HEIGHT / 2 + 20);
+            return;
+        }
+
+        if (player != null) player.draw(g);
+        if (projectile != null) projectile.draw(g);
+        for (Obstacle obs : obstacles) obs.draw(g);
+        for (ParticleExplosion explosion : explosions) explosion.draw(g);
+
+        if (gameState == GameState.GAME_OVER) {
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 24));
+            FontMetrics fm = g.getFontMetrics();
+            String msg = "GAME OVER";
+            String restart = "Press R to Restart";
+            g.drawString(msg, (WIDTH - fm.stringWidth(msg)) / 2, HEIGHT / 2 - 20);
+            g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 20);
         }
     }
 
     @Override
+    public void keyTyped(KeyEvent e) {}
+
+    // Handles all key press events by game state
+    @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
 
-        if (isGameOver && key == KeyEvent.VK_R) {
-            resetGame();
+        if (gameState == GameState.MENU && key == KeyEvent.VK_ENTER) {
+            player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
+            projectile = new Projectile();
+            score = 0;
+            obstacles.clear();
+            explosions.clear();
+            updateScoreLabel();
+            gameState = GameState.PLAYING;
             return;
         }
+
+        if (gameState == GameState.GAME_OVER && key == KeyEvent.VK_R) {
+            player = null;
+            projectile = null;
+            score = 0;
+            obstacles.clear();
+            explosions.clear();
+            updateScoreLabel();
+            gameState = GameState.MENU;
+            return;
+        }
+
+        if (gameState != GameState.PLAYING) return;
 
         switch (key) {
             case KeyEvent.VK_LEFT:
@@ -221,6 +254,7 @@ public class SpaceGame extends JFrame implements KeyListener {
         }
     }
 
+    // Tracks key releases
     @Override
     public void keyReleased(KeyEvent e) {
         int key = e.getKeyCode();
@@ -228,9 +262,7 @@ public class SpaceGame extends JFrame implements KeyListener {
         if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
     }
 
-    @Override
-    public void keyTyped(KeyEvent e) {}
-
+    // Launches game window
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new SpaceGame().setVisible(true));
     }

@@ -31,6 +31,8 @@ public class SpaceGame extends JFrame implements KeyListener {
     private BufferedImage shipImage;
     private BufferedImage spriteSheet;
     private Projectile projectile;
+    private int spriteWidth = 64;
+    private int spriteHeight = 64;
 
     private static class AfterImage {
         int x, y;
@@ -57,6 +59,7 @@ public class SpaceGame extends JFrame implements KeyListener {
         try {
             shipImage = ImageIO.read(new File("spacegame/Asteroid Destroyer.png"));
             spriteSheet = ImageIO.read(new File("spacegame/AngryGuy.png"));
+
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -213,7 +216,7 @@ public class SpaceGame extends JFrame implements KeyListener {
             g.drawImage(shipImage, player.getX(), player.getY(), null);
         }
         if (projectile != null) projectile.draw(g);
-        for (Obstacle obs : obstacles) obs.draw(g);
+//        for (Obstacle obs : obstacles) obs.draw(g);
         for (ParticleExplosion explosion : explosions) explosion.draw(g);
 
         if (gameState == GameState.GAME_OVER) {
@@ -227,6 +230,44 @@ public class SpaceGame extends JFrame implements KeyListener {
             g.drawString(scoreMsg, (WIDTH - fm.stringWidth(scoreMsg)) / 2, HEIGHT / 2);
             g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 40);
         }
+
+
+
+
+
+        for (Obstacle obstacle: obstacles) {
+
+            if (spriteSheet != null) {
+
+               // Randomly select a sprite index (0-3)
+
+                Random random = new Random();
+
+                int spriteIndex = random.nextInt(4);
+
+                // Calc the x y coord of the selected sprite on the sprite sheet
+
+                int spriteX = spriteIndex * spriteWidth;
+
+                int spriteY = 0; // Assuming all sprites are in the first row
+
+                // Draw the selected sprite onto the canvas
+
+                g.drawImage(spriteSheet.getSubimage(spriteX, spriteY,
+
+                        spriteWidth, spriteHeight), obstacle.x, obstacle.y, null);
+
+            }
+
+        }
+
+
+
+
+
+
+
+
     }
 
     @Override

@@ -3,16 +3,30 @@ package spacegame;
 import java.awt.*;
 
 public class Player {
+
+    // Player Constants //
+
+    // Player Dimensions
     public static final int WIDTH = 50;
     public static final int HEIGHT = 50;
-    private static final int SPEED = 5;
+
+    // Player Speed
+    private static final int SPEED = 5; // Default Value: 5
+
+    // Dash Properties
     private static final int DASH_DISTANCE = 100;
     private static final long DASH_COOLDOWN_MS = 3000;
 
     private int x, y;
+
+    // Player Health Points
     private int health = 3;
+
+    // Invincibility
     private boolean invincible = false;
     private long invincibilityEnd = 0;
+
+    // Dash
     private boolean canDash = true;
     private long dashCooldownEnd = 0;
 
@@ -72,6 +86,7 @@ public class Player {
     public boolean isInvincible() { return invincible; }
     public boolean canDash() { return canDash; }
 
+    // Draw Method: Graphics
     public void draw(Graphics g) {
         if (!invincible || (System.currentTimeMillis() / 100 % 2 == 0)) {
             g.setColor(Color.BLUE);

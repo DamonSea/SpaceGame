@@ -16,11 +16,17 @@ import java.util.List;
 import java.util.Random;
 import javax.sound.sampled.*;
 
+/**
+ * Main game window and loop for Space Game.
+ * Handles rendering, input, game states, and updates.
+ */
 public class SpaceGame extends JFrame implements KeyListener {
 
+    // Constants for window size
     public static final int WIDTH = 500;
     public static final int HEIGHT = 500;
 
+    // Different game states
     private enum GameState { MENU, PLAYING, GAME_OVER }
     private GameState gameState = GameState.MENU;
 
@@ -28,11 +34,13 @@ public class SpaceGame extends JFrame implements KeyListener {
     private final JLabel scoreLabel;
     private final javax.swing.Timer timer;
 
+    // Core game entities
     private Player player;
     private BufferedImage shipImage;
     private BufferedImage spriteSheet;
     private Projectile projectile;
 
+    // Visual effect when dashing
     private static class AfterImage {
         int x, y;
         float alpha;
@@ -43,11 +51,13 @@ public class SpaceGame extends JFrame implements KeyListener {
         }
     }
 
+    // Collections for game objects and effects
     private final List<AfterImage> afterImages = new ArrayList<>();
     private final List<Obstacle> obstacles = new ArrayList<>();
     private final List<Star> stars = new ArrayList<>();
     private final List<ParticleExplosion> explosions = new ArrayList<>();
 
+    // Input flags
     private boolean leftPressed = false;
     private boolean rightPressed = false;
     private boolean isFiring = false;
@@ -67,6 +77,7 @@ public class SpaceGame extends JFrame implements KeyListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
+        // Initialize main panel with custom paint
         gamePanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -75,6 +86,7 @@ public class SpaceGame extends JFrame implements KeyListener {
             }
         };
 
+        // Display score and health
         scoreLabel = new JLabel();
         scoreLabel.setForeground(Color.GREEN);
         scoreLabel.setOpaque(true);
@@ -90,6 +102,7 @@ public class SpaceGame extends JFrame implements KeyListener {
         generateStaticStars(200);
         updateScoreLabel();
 
+        // Game loop timer
         timer = new javax.swing.Timer(20, e -> {
             if (gameState == GameState.PLAYING) {
                 update();
@@ -115,14 +128,12 @@ public class SpaceGame extends JFrame implements KeyListener {
         scoreLabel.setText("Score: " + score + "    Health: " + hearts);
     }
 
+    /**
+     * Main update loop for game logic.
+     */
     private void update() {
         if (player == null || projectile == null) {
-            player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
-            projectile = new Projectile();
-            obstacles.clear();
-            explosions.clear();
-            score = 0;
-            updateScoreLabel();
+            initializeGameObjects();
             return;
         }
 
@@ -133,11 +144,29 @@ public class SpaceGame extends JFrame implements KeyListener {
             dashTrailFramesLeft--;
         }
 
+        handleMovementInput();
+        projectile.update();
+        updateObstacles();
+        updateExplosions();
+        spawnObstaclesRandomly();
+        updateScoreLabel();
+    }
+
+    private void initializeGameObjects() {
+        player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
+        projectile = new Projectile();
+        obstacles.clear();
+        explosions.clear();
+        score = 0;
+        updateScoreLabel();
+    }
+
+    private void handleMovementInput() {
         if (leftPressed) player.moveLeft();
         if (rightPressed) player.moveRight(WIDTH);
+    }
 
-        projectile.update();
-
+    private void updateObstacles() {
         Iterator<Obstacle> it = obstacles.iterator();
         while (it.hasNext()) {
             Obstacle o = it.next();
@@ -153,7 +182,6 @@ public class SpaceGame extends JFrame implements KeyListener {
                 it.remove();
                 continue;
             }
-
             if (projectile.isVisible() && projectile.getBounds().intersects(o.getBounds())) {
                 explosions.add(new ParticleExplosion(o.getBounds().x + Obstacle.WIDTH / 2, o.getBounds().y + Obstacle.HEIGHT / 2));
                 projectile.hide();
@@ -162,50 +190,68 @@ public class SpaceGame extends JFrame implements KeyListener {
                 score += 10;
             }
         }
+    }
 
+    private void updateExplosions() {
         for (Iterator<ParticleExplosion> peIt = explosions.iterator(); peIt.hasNext(); ) {
             ParticleExplosion p = peIt.next();
             p.update();
             if (!p.isActive()) peIt.remove();
         }
+    }
 
+    private void spawnObstaclesRandomly() {
         if (Math.random() < 0.02) {
             int x = new Random().nextInt(WIDTH - Obstacle.WIDTH);
             obstacles.add(new Obstacle(x, spriteSheet));
         }
-
-        updateScoreLabel();
     }
 
     private void draw(Graphics g) {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, WIDTH, HEIGHT);
 
+        drawStars(g);
+
+        if (gameState == GameState.MENU) {
+            drawMenu(g);
+            return;
+        }
+
+        drawPlayerAndEffects(g);
+        drawProjectilesAndObstacles(g);
+
+        if (gameState == GameState.GAME_OVER) {
+            drawGameOverScreen(g);
+        }
+    }
+
+    private void drawStars(Graphics g) {
         for (Star star : stars) {
             star.twinkle();
             g.setColor(star.getColor());
             g.fillOval(star.x, star.y, 2, 2);
         }
+    }
 
-        if (gameState == GameState.MENU) {
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 24));
-            FontMetrics fm = g.getFontMetrics();
-            String title = "STAR FIRE";
-            String start = "Press ENTER to Start";
-            String instructions = "WASD / Arrows to Move, W / Up to Shoot";
+    private void drawMenu(Graphics g) {
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 24));
+        FontMetrics fm = g.getFontMetrics();
+        String title = "STAR FIRE";
+        String start = "Press ENTER to Start";
+        String instructions = "WASD / Arrows to Move, W / Up to Shoot";
 
-            g.drawString(title, (WIDTH - fm.stringWidth(title)) / 2, HEIGHT / 2 - 40);
-            g.drawString(start, (WIDTH - fm.stringWidth(start)) / 2, HEIGHT / 2);
-            g.setFont(new Font("Arial", Font.PLAIN, 16));
-            g.drawString(instructions, (WIDTH - g.getFontMetrics().stringWidth(instructions)) / 2, HEIGHT / 2 + 40);
-            return;
-        }
+        g.drawString(title, (WIDTH - fm.stringWidth(title)) / 2, HEIGHT / 2 - 40);
+        g.drawString(start, (WIDTH - fm.stringWidth(start)) / 2, HEIGHT / 2);
+        g.setFont(new Font("Arial", Font.PLAIN, 16));
+        g.drawString(instructions, (WIDTH - g.getFontMetrics().stringWidth(instructions)) / 2, HEIGHT / 2 + 40);
+    }
 
+    private void drawPlayerAndEffects(Graphics g) {
         if (player != null && shipImage != null) {
-            Iterator<AfterImage> it = afterImages.iterator();
             Graphics2D g2d = (Graphics2D) g;
-            while (it.hasNext()) {
+            for (Iterator<AfterImage> it = afterImages.iterator(); it.hasNext(); ) {
                 AfterImage a = it.next();
                 Composite original = g2d.getComposite();
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a.alpha));
@@ -218,22 +264,24 @@ public class SpaceGame extends JFrame implements KeyListener {
             }
             g.drawImage(shipImage, player.getX(), player.getY(), null);
         }
+    }
 
+    private void drawProjectilesAndObstacles(Graphics g) {
         if (projectile != null) projectile.draw(g);
         for (Obstacle obs : obstacles) obs.draw(g);
         for (ParticleExplosion explosion : explosions) explosion.draw(g);
+    }
 
-        if (gameState == GameState.GAME_OVER) {
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 24));
-            FontMetrics fm = g.getFontMetrics();
-            String msg = "GAME OVER";
-            String scoreMsg = "Final Score: " + score;
-            String restart = "Press R to Restart";
-            g.drawString(msg, (WIDTH - fm.stringWidth(msg)) / 2, HEIGHT / 2 - 40);
-            g.drawString(scoreMsg, (WIDTH - fm.stringWidth(scoreMsg)) / 2, HEIGHT / 2);
-            g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 40);
-        }
+    private void drawGameOverScreen(Graphics g) {
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 24));
+        FontMetrics fm = g.getFontMetrics();
+        String msg = "GAME OVER";
+        String scoreMsg = "Final Score: " + score;
+        String restart = "Press R to Restart";
+        g.drawString(msg, (WIDTH - fm.stringWidth(msg)) / 2, HEIGHT / 2 - 40);
+        g.drawString(scoreMsg, (WIDTH - fm.stringWidth(scoreMsg)) / 2, HEIGHT / 2);
+        g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 40);
     }
 
     @Override
@@ -241,15 +289,19 @@ public class SpaceGame extends JFrame implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        int key = e.getKeyCode();
+        handleKeyPressed(e.getKeyCode());
+    }
 
+    @Override
+    public void keyReleased(KeyEvent e) {
+        int key = e.getKeyCode();
+        if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = false;
+        if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
+    }
+
+    private void handleKeyPressed(int key) {
         if (gameState == GameState.MENU && key == KeyEvent.VK_ENTER) {
-            player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
-            projectile = new Projectile();
-            score = 0;
-            obstacles.clear();
-            explosions.clear();
-            updateScoreLabel();
+            initializeGameObjects();
             gameState = GameState.PLAYING;
             return;
         }
@@ -257,11 +309,11 @@ public class SpaceGame extends JFrame implements KeyListener {
         if (gameState == GameState.GAME_OVER && key == KeyEvent.VK_R) {
             player = null;
             projectile = null;
-            score = 0;
             obstacles.clear();
             explosions.clear();
-            updateScoreLabel();
+            score = 0;
             gameState = GameState.MENU;
+            updateScoreLabel();
             return;
         }
 
@@ -279,37 +331,30 @@ public class SpaceGame extends JFrame implements KeyListener {
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_S:
                 if (player.canDash()) {
-                    if (leftPressed) {
-                        player.dashLeft();
-                        dashTrailFramesLeft = 6;
-                    } else if (rightPressed) {
-                        player.dashRight(WIDTH);
-                        dashTrailFramesLeft = 6;
-                    }
+                    if (leftPressed) player.dashLeft();
+                    if (rightPressed) player.dashRight(WIDTH);
+                    dashTrailFramesLeft = 6;
                 }
                 break;
             case KeyEvent.VK_UP:
             case KeyEvent.VK_W:
-                if (!isFiring) {
-                    projectile.fire(player.getX() + Player.WIDTH / 2 - Projectile.WIDTH / 2, player.getY());
-                    playSound();
-                    isFiring = true;
-                    new Thread(() -> {
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException ignored) {}
-                        isFiring = false;
-                    }).start();
-                }
+                fireProjectileIfPossible();
                 break;
         }
     }
 
-    @Override
-    public void keyReleased(KeyEvent e) {
-        int key = e.getKeyCode();
-        if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = false;
-        if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
+    private void fireProjectileIfPossible() {
+        if (!isFiring) {
+            projectile.fire(player.getX() + Player.WIDTH / 2 - Projectile.WIDTH / 2, player.getY());
+            playSound();
+            isFiring = true;
+            new Thread(() -> {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ignored) {}
+                isFiring = false;
+            }).start();
+        }
     }
 
     public static void main(String[] args) {
@@ -342,5 +387,3 @@ public class SpaceGame extends JFrame implements KeyListener {
         }
     }
 }
-
-

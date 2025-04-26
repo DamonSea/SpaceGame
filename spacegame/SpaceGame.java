@@ -24,9 +24,9 @@ public class SpaceGame extends JFrame implements KeyListener {
     private enum GameState { MENU, PLAYING, GAME_OVER }
     private GameState gameState = GameState.MENU;
 
-    private JPanel gamePanel;
-    private JLabel scoreLabel;
-    private javax.swing.Timer timer;
+    private final JPanel gamePanel;
+    private final JLabel scoreLabel;
+    private final javax.swing.Timer timer;
 
     private Player player;
     private BufferedImage shipImage;
@@ -44,9 +44,9 @@ public class SpaceGame extends JFrame implements KeyListener {
     }
 
     private final List<AfterImage> afterImages = new ArrayList<>();
-    private List<Obstacle> obstacles = new ArrayList<>();
-    private List<Star> stars = new ArrayList<>();
-    private List<ParticleExplosion> explosions = new ArrayList<>();
+    private final List<Obstacle> obstacles = new ArrayList<>();
+    private final List<Star> stars = new ArrayList<>();
+    private final List<ParticleExplosion> explosions = new ArrayList<>();
 
     private boolean leftPressed = false;
     private boolean rightPressed = false;

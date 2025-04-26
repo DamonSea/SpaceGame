@@ -1,5 +1,3 @@
-// File: SpaceGame.java
-
 package spacegame;
 
 import java.awt.image.BufferedImage;

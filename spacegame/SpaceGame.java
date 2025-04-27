@@ -1,11 +1,10 @@
 /** Project: Solo Lab 7 Assignment
- * Purpose Details: Create a Space Game in Java
+ * Purpose Details: Star Fire, a Space Game created in Java. One-handed play recommended.
+ Hidden Mechanics: Dash has 3sec cooldown, Player has Brief Invincibility after Damage
  * Course: IST 242
  * Author: Damon Seas
  * Date Developed: 4/15/25
  * Last Date Changed: 4/27/25
- * Rev:
- * Additional Comments: One-handed play recommended, Dash has 3sec cooldown
 
  */
 

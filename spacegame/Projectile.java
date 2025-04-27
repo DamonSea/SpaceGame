@@ -4,9 +4,9 @@ import java.awt.*;
 
 public class Projectile {
     // Projectile size constants
-    public static final int WIDTH = 5;
-    public static final int HEIGHT = 10;
-    private static final int SPEED = 10; // Upward movement speed
+    public static final int WIDTH = 5; // Default Value is 5
+    public static final int HEIGHT = 10; // Default Value is 10
+    private static final int SPEED = 10; // Upward movement speed, DF is 10
 
     private int x, y;
     private boolean visible = false; // Visibility state

@@ -262,13 +262,17 @@ public class SpaceGame extends JFrame implements KeyListener {
         g.setFont(new Font("Arial", Font.BOLD, 24));
         FontMetrics fm = g.getFontMetrics();
         String title = "STAR FIRE";
-        String start = "Press ENTER to Start";
-        String instructions = "WASD / Arrows to Move, W / Up to Shoot";
+        String start = "Press RETURN to Start";
+        String instructions = "WASD / Arrows to Move";
+        String shootinstructions = "W / Up to Shoot";
+        String dashinstructions = "S / Down + Direction to Rainbow Dash!";
 
         g.drawString(title, (WIDTH - fm.stringWidth(title)) / 2, HEIGHT / 2 - 40);
         g.drawString(start, (WIDTH - fm.stringWidth(start)) / 2, HEIGHT / 2);
         g.setFont(new Font("Arial", Font.PLAIN, 16));
         g.drawString(instructions, (WIDTH - g.getFontMetrics().stringWidth(instructions)) / 2, HEIGHT / 2 + 40);
+        g.drawString(shootinstructions, (WIDTH - g.getFontMetrics().stringWidth(instructions)) / 2, HEIGHT / 2 + 60);
+        g.drawString(dashinstructions, (WIDTH - g.getFontMetrics().stringWidth(instructions)) / 2, HEIGHT / 2 + 80);
     }
 
     // Draws player, afterimages, and dash trail

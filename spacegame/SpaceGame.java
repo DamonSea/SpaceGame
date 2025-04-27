@@ -5,6 +5,7 @@
  * Date Developed: 4/15/25
  * Last Date Changed: 4/27/25
  * Rev:
+ * Additional Comments: One-handed play recommended, Dash has 3sec cooldown
 
  */
 

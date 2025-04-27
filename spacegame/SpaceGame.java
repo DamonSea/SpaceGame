@@ -1,30 +1,25 @@
+
 package spacegame;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
+import javax.swing.*;
 
-/**
- * Main game window and loop for Space Game.
- * Handles rendering, input, game states, and updates.
- */
 public class SpaceGame extends JFrame implements KeyListener {
 
-    // Constants for window size
     public static final int WIDTH = 500;
     public static final int HEIGHT = 500;
 
-    // Different game states
     private enum GameState { MENU, PLAYING, GAME_OVER }
     private GameState gameState = GameState.MENU;
 
@@ -32,13 +27,11 @@ public class SpaceGame extends JFrame implements KeyListener {
     private final JLabel scoreLabel;
     private final javax.swing.Timer timer;
 
-    // Core game entities
     private Player player;
     private BufferedImage shipImage;
     private BufferedImage spriteSheet;
     private Projectile projectile;
 
-    // Visual effect when dashing
     private static class AfterImage {
         int x, y;
         float alpha;
@@ -49,18 +42,19 @@ public class SpaceGame extends JFrame implements KeyListener {
         }
     }
 
-    // Collections for game objects and effects
     private final List<AfterImage> afterImages = new ArrayList<>();
     private final List<Obstacle> obstacles = new ArrayList<>();
     private final List<Star> stars = new ArrayList<>();
     private final List<ParticleExplosion> explosions = new ArrayList<>();
 
-    // Input flags
     private boolean leftPressed = false;
     private boolean rightPressed = false;
     private boolean isFiring = false;
     private int dashTrailFramesLeft = 0;
     private int score = 0;
+
+    private long startTime;
+    private long elapsedTime;
 
     public SpaceGame() {
         try {
@@ -75,7 +69,6 @@ public class SpaceGame extends JFrame implements KeyListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        // Initialize main panel with custom paint
         gamePanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -84,7 +77,6 @@ public class SpaceGame extends JFrame implements KeyListener {
             }
         };
 
-        // Display score and health
         scoreLabel = new JLabel();
         scoreLabel.setForeground(Color.GREEN);
         scoreLabel.setOpaque(true);
@@ -100,7 +92,6 @@ public class SpaceGame extends JFrame implements KeyListener {
         generateStaticStars(200);
         updateScoreLabel();
 
-        // Game loop timer
         timer = new javax.swing.Timer(20, e -> {
             if (gameState == GameState.PLAYING) {
                 update();
@@ -123,12 +114,11 @@ public class SpaceGame extends JFrame implements KeyListener {
         if (player != null) {
             for (int i = 0; i < player.getHealth(); i++) hearts.append("\u2665");
         }
-        scoreLabel.setText("Score: " + score + "    Health: " + hearts);
+        long currentTime = (gameState == GameState.PLAYING) ? (System.currentTimeMillis() - startTime) / 1000 : elapsedTime / 1000;
+        scoreLabel.setText("Score: " + score + "    Health: " + hearts + "    Time: " + currentTime + "s");
     }
 
-    /**
-     * Main update loop for game logic.
-     */
+
     private void update() {
         if (player == null || projectile == null) {
             initializeGameObjects();
@@ -176,7 +166,10 @@ public class SpaceGame extends JFrame implements KeyListener {
             if (player.getBounds().intersects(o.getBounds())) {
                 explosions.add(new ParticleExplosion(player.getX() + Player.WIDTH / 2, player.getY() + Player.HEIGHT / 2));
                 player.takeDamage();
-                if (player.getHealth() <= 0) gameState = GameState.GAME_OVER;
+                if (player.getHealth() <= 0) {
+                    elapsedTime = System.currentTimeMillis() - startTime;
+                    gameState = GameState.GAME_OVER;
+                }
                 it.remove();
                 continue;
             }
@@ -276,10 +269,13 @@ public class SpaceGame extends JFrame implements KeyListener {
         FontMetrics fm = g.getFontMetrics();
         String msg = "GAME OVER";
         String scoreMsg = "Final Score: " + score;
+        String timeMsg = "You survived: " + (elapsedTime / 1000) + " seconds";
         String restart = "Press R to Restart";
-        g.drawString(msg, (WIDTH - fm.stringWidth(msg)) / 2, HEIGHT / 2 - 40);
-        g.drawString(scoreMsg, (WIDTH - fm.stringWidth(scoreMsg)) / 2, HEIGHT / 2);
-        g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 40);
+
+        g.drawString(msg, (WIDTH - fm.stringWidth(msg)) / 2, HEIGHT / 2 - 60);
+        g.drawString(scoreMsg, (WIDTH - fm.stringWidth(scoreMsg)) / 2, HEIGHT / 2 - 20);
+        g.drawString(timeMsg, (WIDTH - fm.stringWidth(timeMsg)) / 2, HEIGHT / 2 + 20);
+        g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 60);
     }
 
     @Override
@@ -300,6 +296,7 @@ public class SpaceGame extends JFrame implements KeyListener {
     private void handleKeyPressed(int key) {
         if (gameState == GameState.MENU && key == KeyEvent.VK_ENTER) {
             initializeGameObjects();
+            startTime = System.currentTimeMillis();
             gameState = GameState.PLAYING;
             return;
         }
@@ -310,6 +307,7 @@ public class SpaceGame extends JFrame implements KeyListener {
             obstacles.clear();
             explosions.clear();
             score = 0;
+            elapsedTime = 0;
             gameState = GameState.MENU;
             updateScoreLabel();
             return;
@@ -361,9 +359,7 @@ public class SpaceGame extends JFrame implements KeyListener {
 
     public void playSound() {
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
-                    getClass().getResource("/spacegame/pewpew.wav")
-            );
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(getClass().getResource("/spacegame/pewpew.wav"));
             Clip newClip = AudioSystem.getClip();
             newClip.open(audioInputStream);
             newClip.start();
@@ -374,9 +370,7 @@ public class SpaceGame extends JFrame implements KeyListener {
 
     public void playPopSound() {
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
-                    getClass().getResource("/spacegame/poppy.wav")
-            );
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(getClass().getResource("/spacegame/poppy.wav"));
             Clip newClip = AudioSystem.getClip();
             newClip.open(audioInputStream);
             newClip.start();

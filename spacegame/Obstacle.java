@@ -54,4 +54,14 @@ public class Obstacle {
             g.fillRect(x, y, WIDTH, HEIGHT);
         }
     }
+
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
 }

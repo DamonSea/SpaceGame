@@ -69,10 +69,9 @@ public class GamePanel extends JPanel {
         updateScoreLabel();
 
         timer = new Timer(20, e -> {
-            if (gameState == GameState.PLAYING) update();
-            repaint();
+            update();   // always update
+            repaint();  // always repaint
         });
-        timer.start();
     }
 
     private void generateStaticStars(int count) {

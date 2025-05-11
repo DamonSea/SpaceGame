@@ -1,11 +1,9 @@
 package spacegame;
 
 import javax.imageio.ImageIO;
-import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
-import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -288,7 +286,7 @@ public class GamePanel extends JPanel {
     private void fireProjectileIfPossible() {
         if (!isFiring && player != null) {
             projectile.fire(player.getX() + Player.WIDTH / 2 - Projectile.WIDTH / 2, player.getY());
-            playSound();
+            playFireSound();
             isFiring = true;
             new Thread(() -> {
                 try {
@@ -299,27 +297,14 @@ public class GamePanel extends JPanel {
         }
     }
 
-    private void playSound() {
-        try {
-            AudioInputStream stream = AudioSystem.getAudioInputStream(getClass().getResource("/Sounds/pewpew.wav"));
-            Clip clip = AudioSystem.getClip();
-            clip.open(stream);
-            clip.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void playFireSound() {
+        SoundPlayer.play("/Sounds/pewpew.wav");
     }
 
     private void playPopSound() {
-        try {
-            AudioInputStream stream = AudioSystem.getAudioInputStream(getClass().getResource("/Sounds/poppy.wav"));
-            Clip clip = AudioSystem.getClip();
-            clip.open(stream);
-            clip.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SoundPlayer.play("/Sounds/poppy.wav");
     }
+
 
     // Inner class to manage dash afterimages
     private static class AfterImage {

@@ -148,7 +148,9 @@ public class GamePanel extends JPanel {
 
     private void initializeGameObjects() {
         player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
-        player.setSprite(shipImage);
+
+//        player.setSprite(shipImage); // Adds Ship Image
+
         projectile = new Projectile();
         obstacles.clear();
         explosions.clear();

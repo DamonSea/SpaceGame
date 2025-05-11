@@ -77,8 +77,8 @@ public class SpaceGame extends JFrame implements KeyListener {
     // Constructor initializes the game
     public SpaceGame() {
         try {
-            shipImage = ImageIO.read(new File("spacegame/Asteroid Destroyer.png"));
-            spriteSheet = ImageIO.read(new File("spacegame/AngryGuy.png"));
+            shipImage = ImageIO.read(new File("Images/Asteroid Destroyer.png"));
+            spriteSheet = ImageIO.read(new File("Images/AngryGuy.png"));
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -402,7 +402,7 @@ public class SpaceGame extends JFrame implements KeyListener {
     // Plays shooting sound effect
     public void playSound() {
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(getClass().getResource("/spacegame/pewpew.wav"));
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(getClass().getResource("/Sounds/pewpew.wav"));
             Clip newClip = AudioSystem.getClip();
             newClip.open(audioInputStream);
             newClip.start();
@@ -414,7 +414,7 @@ public class SpaceGame extends JFrame implements KeyListener {
     // Plays pop sound effect when obstacle is destroyed
     public void playPopSound() {
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(getClass().getResource("/spacegame/poppy.wav"));
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(getClass().getResource("/Sounds/poppy.wav"));
             Clip newClip = AudioSystem.getClip();
             newClip.open(audioInputStream);
             newClip.start();

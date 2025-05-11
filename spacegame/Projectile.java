@@ -1,8 +1,11 @@
 package spacegame;
 
 import java.awt.*;
+import spacegame.GameObject;
 
-public class Projectile {
+
+public class Projectile implements GameObject {
+
     // Projectile size constants
     public static final int WIDTH = 5; // Default Value is 5
     public static final int HEIGHT = 10; // Default Value is 10

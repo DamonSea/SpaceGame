@@ -69,9 +69,11 @@ public class GamePanel extends JPanel {
         updateScoreLabel();
 
         timer = new Timer(20, e -> {
-            update();   // always update
-            repaint();  // always repaint
+            update();
+            repaint();
         });
+        timer.start();
+
     }
 
     private void generateStaticStars(int count) {

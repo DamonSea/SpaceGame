@@ -12,11 +12,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-public class GamePanel extends JPanel implements KeyListener {
+public class GamePanel extends JPanel {
 
     // Game constants
     public static final int WIDTH = 500;
     public static final int HEIGHT = 500;
+
+    // Input Manager
+    private final InputManager input = new InputManager();
 
     // Game state
     private enum GameState { MENU, PLAYING, GAME_OVER }
@@ -39,15 +42,13 @@ public class GamePanel extends JPanel implements KeyListener {
     private long startTime, elapsedTime;
 
     // Input state
-    private boolean leftPressed = false;
-    private boolean rightPressed = false;
     private boolean isFiring = false;
     private int dashTrailFramesLeft = 0;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setFocusable(true);
-        addKeyListener(this);
+        addKeyListener(input);
         setLayout(null);
 
         scoreLabel.setForeground(Color.GREEN);
@@ -94,9 +95,29 @@ public class GamePanel extends JPanel implements KeyListener {
     }
 
     private void update() {
+
         if (player == null || projectile == null) {
             initializeGameObjects();
             return;
+        }
+
+        if (gameState == GameState.MENU && input.isEnterPressed()) {
+            initializeGameObjects();
+            startTime = System.currentTimeMillis();
+            gameState = GameState.PLAYING;
+            input.resetOneTimeActions();
+        }
+
+        if (gameState == GameState.GAME_OVER && input.isRestartPressed()) {
+            player = null;
+            projectile = null;
+            obstacles.clear();
+            explosions.clear();
+            score = 0;
+            elapsedTime = 0;
+            gameState = GameState.MENU;
+            updateScoreLabel();
+            input.resetOneTimeActions();
         }
 
         player.updateStatus();
@@ -111,7 +132,22 @@ public class GamePanel extends JPanel implements KeyListener {
         updateExplosions();
         spawnObstaclesRandomly();
         updateScoreLabel();
+
+        // Fire projectile
+        if (input.isFirePressed()) {
+            fireProjectileIfPossible();
+        }
+
+        // Dash input
+        if (input.isDashPressed() && player != null && player.canDash()) {
+            if (input.isLeftPressed()) player.dashLeft();
+            if (input.isRightPressed()) player.dashRight(WIDTH);
+            dashTrailFramesLeft = 6;
+        }
+
     }
+
+
 
     private void initializeGameObjects() {
         player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
@@ -123,8 +159,8 @@ public class GamePanel extends JPanel implements KeyListener {
     }
 
     private void handleInput() {
-        if (leftPressed) player.moveLeft();
-        if (rightPressed) player.moveRight(WIDTH);
+        if (input.isLeftPressed()) player.moveLeft();
+        if (input.isRightPressed()) player.moveRight(WIDTH);
     }
 
     private void updateObstacles() {
@@ -246,48 +282,6 @@ public class GamePanel extends JPanel implements KeyListener {
         g.drawString(scoreMsg, (WIDTH - fm.stringWidth(scoreMsg)) / 2, HEIGHT / 2 - 20);
         g.drawString(timeMsg, (WIDTH - fm.stringWidth(timeMsg)) / 2, HEIGHT / 2 + 20);
         g.drawString(restart, (WIDTH - fm.stringWidth(restart)) / 2, HEIGHT / 2 + 60);
-    }
-
-    // Input
-    @Override public void keyTyped(KeyEvent e) {}
-    @Override public void keyReleased(KeyEvent e) {
-        switch (e.getKeyCode()) {
-            case KeyEvent.VK_LEFT, KeyEvent.VK_A -> leftPressed = false;
-            case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> rightPressed = false;
-        }
-    }
-    @Override public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-            case KeyEvent.VK_ENTER -> {
-                if (gameState == GameState.MENU) {
-                    initializeGameObjects();
-                    startTime = System.currentTimeMillis();
-                    gameState = GameState.PLAYING;
-                }
-            }
-            case KeyEvent.VK_R -> {
-                if (gameState == GameState.GAME_OVER) {
-                    player = null;
-                    projectile = null;
-                    obstacles.clear();
-                    explosions.clear();
-                    score = 0;
-                    elapsedTime = 0;
-                    gameState = GameState.MENU;
-                    updateScoreLabel();
-                }
-            }
-            case KeyEvent.VK_LEFT, KeyEvent.VK_A -> leftPressed = true;
-            case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> rightPressed = true;
-            case KeyEvent.VK_DOWN, KeyEvent.VK_S -> {
-                if (player != null && player.canDash()) {
-                    if (leftPressed) player.dashLeft();
-                    if (rightPressed) player.dashRight(WIDTH);
-                    dashTrailFramesLeft = 6;
-                }
-            }
-            case KeyEvent.VK_UP, KeyEvent.VK_W -> fireProjectileIfPossible();
-        }
     }
 
     private void fireProjectileIfPossible() {

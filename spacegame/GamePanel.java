@@ -33,7 +33,10 @@ public class GamePanel extends JPanel {
     private final List<ParticleExplosion> explosions = new ArrayList<>();
     private final List<AfterImage> afterImages = new ArrayList<>();
 
+
     private final HUD hud = new HUD();
+    private final List<GameObject> gameObjects = new ArrayList<>();
+
 
     // UI
     private final Timer timer;
@@ -112,14 +115,16 @@ public class GamePanel extends JPanel {
             input.resetOneTimeActions();
         }
 
-        player.updateStatus();
+        for (GameObject obj : gameObjects) {
+            obj.update();
+        }
+
         if (dashTrailFramesLeft > 0) {
             afterImages.add(new AfterImage(player.getX(), player.getY()));
             dashTrailFramesLeft--;
         }
 
         handleInput();
-        projectile.update();
         updateObstacles();
         updateExplosions();
         spawnObstaclesRandomly();
@@ -143,11 +148,18 @@ public class GamePanel extends JPanel {
 
     private void initializeGameObjects() {
         player = new Player(WIDTH / 2 - Player.WIDTH / 2, HEIGHT - Player.HEIGHT - 20);
+        player.setSprite(shipImage);
         projectile = new Projectile();
         obstacles.clear();
         explosions.clear();
+        gameObjects.clear();
+
+        gameObjects.add(player);
+        gameObjects.add(projectile);
+        gameObjects.addAll(obstacles); // (this will be updated dynamically later)
         score = 0;
         updateHUD();
+
     }
 
     private void handleInput() {
@@ -195,7 +207,11 @@ public class GamePanel extends JPanel {
     private void spawnObstaclesRandomly() {
         if (Math.random() < 0.02) {
             int x = new Random().nextInt(WIDTH - Obstacle.WIDTH);
-            obstacles.add(new Obstacle(x, spriteSheet));
+
+            Obstacle o = new Obstacle(x, spriteSheet);
+            obstacles.add(o);
+            gameObjects.add(o);
+
         }
     }
 
@@ -218,8 +234,10 @@ public class GamePanel extends JPanel {
         }
 
         drawPlayerAndEffects(g);
-        if (projectile != null) projectile.draw(g);
-        for (Obstacle o : obstacles) o.draw(g);
+        for (GameObject obj : gameObjects) {
+            obj.draw(g);
+        }
+
         for (ParticleExplosion pe : explosions) pe.draw(g);
 
         if (gameState == GameState.GAME_OVER) drawGameOver(g);

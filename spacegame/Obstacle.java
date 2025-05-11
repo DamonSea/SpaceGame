@@ -3,8 +3,11 @@ package spacegame;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Random;
+import spacegame.GameObject;
 
-public class Obstacle {
+
+public class Obstacle implements GameObject {
+
 
     // Size constants for all obstacles
     public static final int WIDTH = 20;

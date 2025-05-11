@@ -1,8 +1,10 @@
 package spacegame;
 
 import java.awt.*;
+import java.awt.Graphics;
 
-public class Player {
+public class Player implements GameObject {
+
 
     // Player Constants //
 
@@ -103,4 +105,11 @@ public class Player {
             g.fillPolygon(xPoints, yPoints, 4);
         }
     }
+
+    @Override
+    public void update() {
+        updateStatus();
+    }
+
+
 }

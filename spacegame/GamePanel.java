@@ -33,8 +33,9 @@ public class GamePanel extends JPanel {
     private final List<ParticleExplosion> explosions = new ArrayList<>();
     private final List<AfterImage> afterImages = new ArrayList<>();
 
+    private final HUD hud = new HUD();
+
     // UI
-    private final JLabel scoreLabel = new JLabel();
     private final Timer timer;
     private int score = 0;
     private long startTime, elapsedTime;
@@ -48,13 +49,7 @@ public class GamePanel extends JPanel {
         setFocusable(true);
         addKeyListener(input);
         setLayout(null);
-
-        scoreLabel.setForeground(Color.GREEN);
-        scoreLabel.setOpaque(true);
-        scoreLabel.setBackground(Color.BLACK);
-        scoreLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
-        scoreLabel.setBounds(10, 10, 300, 20);
-        add(scoreLabel);
+        add(hud.getLabel());
 
         try {
             shipImage = ImageIO.read(new File("Images/Asteroid Destroyer.png"));
@@ -64,7 +59,7 @@ public class GamePanel extends JPanel {
         }
 
         generateStaticStars(200);
-        updateScoreLabel();
+        updateHUD();
 
         timer = new Timer(20, e -> {
             update();
@@ -82,16 +77,14 @@ public class GamePanel extends JPanel {
         }
     }
 
-    private void updateScoreLabel() {
-        StringBuilder hearts = new StringBuilder();
-        if (player != null) {
-            for (int i = 0; i < player.getHealth(); i++) hearts.append("\u2665");
-        }
-        long currentTime = (gameState == GameState.PLAYING)
-                ? (System.currentTimeMillis() - startTime) / 1000
-                : elapsedTime / 1000;
-        scoreLabel.setText("Score: " + score + "    Health: " + hearts + "    Time: " + currentTime + "s");
+    private void updateHUD() {
+        int health = (player != null) ? player.getHealth() : 0;
+        long time = (gameState == GameState.PLAYING)
+                ? (System.currentTimeMillis() - startTime)
+                : elapsedTime;
+        hud.update(score, health, time);
     }
+
 
     private void update() {
 
@@ -115,7 +108,7 @@ public class GamePanel extends JPanel {
             score = 0;
             elapsedTime = 0;
             gameState = GameState.MENU;
-            updateScoreLabel();
+            updateHUD();
             input.resetOneTimeActions();
         }
 
@@ -130,7 +123,7 @@ public class GamePanel extends JPanel {
         updateObstacles();
         updateExplosions();
         spawnObstaclesRandomly();
-        updateScoreLabel();
+        updateHUD();
 
         // Fire projectile
         if (input.isFirePressed()) {
@@ -154,7 +147,7 @@ public class GamePanel extends JPanel {
         obstacles.clear();
         explosions.clear();
         score = 0;
-        updateScoreLabel();
+        updateHUD();
     }
 
     private void handleInput() {
@@ -236,19 +229,26 @@ public class GamePanel extends JPanel {
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 24));
         FontMetrics fm = g.getFontMetrics();
+
         String title = "STAR FIRE";
+        int y = HEIGHT / 2;
+
+        // Draw title
+        g.drawString(title, (WIDTH - fm.stringWidth(title)) / 2, y - 40);
+
+        // Draw instructions
         String[] lines = {
                 "Press RETURN to Start",
                 "WASD / Arrows to Move",
                 "W / Up to Shoot",
                 "S / Down + Direction to Rainbow Dash!"
         };
-        int y = HEIGHT / 2 - 40;
         for (String line : lines) {
             g.drawString(line, (WIDTH - fm.stringWidth(line)) / 2, y);
             y += 30;
         }
     }
+
 
     private void drawPlayerAndEffects(Graphics g) {
         if (player != null && shipImage != null) {

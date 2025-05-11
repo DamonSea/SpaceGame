@@ -8,7 +8,6 @@ import spacegame.GameObject;
 
 public class Obstacle implements GameObject {
 
-
     // Size constants for all obstacles
     public static final int WIDTH = 20;
     public static final int HEIGHT = 20;
